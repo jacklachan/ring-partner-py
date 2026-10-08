@@ -159,9 +159,10 @@ The stand-in follows the published documentation. It has no video clips or live 
 - 14 tests, run in CI on Python 3.10 and 3.13, all against the stand-in.
 - Written from Ring's public documentation and hello-world sample. Checked against the live API with a
   Developer Playground token on 8 October 2026: device discovery, status, capabilities and Event History
-  worked. Image download answered `403 Requested time range is not within authorized boundaries` for a
-  window with no events in it, which the client now raises as `MediaNotReady`. Snapshots for a real event,
-  video clips, WHEP and refresh-token sign-in have **not** been confirmed live yet. If a call behaves
+  worked, as did `snapshot_at` for a Playground event and `whep_start` from a browser offer. Image download
+  answered `403 Requested time range is not within authorized boundaries` for a window with no events in
+  it, which the client raises as `MediaNotReady`. Video clips, webhooks and refresh-token sign-in have
+  **not** been confirmed live yet. If a call behaves
   differently for you, please open an issue with the status code and error body.
 - Not covered yet: account linking (nonce verification), device configurations and location, RTSP,
   chime audio playback, sensor events.
