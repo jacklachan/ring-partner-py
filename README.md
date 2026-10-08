@@ -156,7 +156,7 @@ The stand-in follows the published documentation. It has no video clips or live 
 
 ## Status
 
-- 14 tests, run in CI on Python 3.10 and 3.13, all against the stand-in.
+- 15 tests, run in CI on Python 3.10 and 3.13, all against the stand-in.
 - Written from Ring's public documentation and hello-world sample. Checked against the live API with a
   Developer Playground token on 8 October 2026: device discovery, status, capabilities and Event History
   worked, as did `snapshot_at` for a Playground event and `whep_start` from a browser offer. Image download

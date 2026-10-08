@@ -152,3 +152,15 @@ async def test_403_for_an_unauthorized_time_range_is_no_media_not_a_bad_token():
         await ring.latest_snapshot(DEVICE_ID, 1, 2)
     assert info.value.status == 403 and not isinstance(info.value, RingAuthError)
     await ring.aclose()
+
+
+async def test_422_undecryptable_media_is_no_media():
+    # The reply the Developer Playground gave on 8 Oct 2026 for latest_in_range with nothing readable.
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(422, json={"errors": [{"detail": "No valid Greco key available for decryption"}]})
+
+    ring = RingClient(access_token="tok", api_base=BASE, transport=httpx.MockTransport(handler))
+    with pytest.raises(MediaNotReady) as info:
+        await ring.latest_snapshot(DEVICE_ID, 1, 2)
+    assert info.value.status == 422 and info.value.code == "MEDIA_NOT_READABLE"
+    await ring.aclose()
