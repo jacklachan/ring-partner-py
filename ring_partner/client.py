@@ -36,7 +36,8 @@ class RingAuthError(RingError):
 
 
 class MediaNotReady(RingError):
-    """416 MEDIA_NOT_FOUND or 425 RECORDING_NOT_READY: no media for that range (yet)."""
+    """No media for that range: 416 MEDIA_NOT_FOUND, 425 RECORDING_NOT_READY, or a 403 saying the
+    requested time range is outside what the app is authorized for."""
 
 
 @dataclass
@@ -84,6 +85,10 @@ def _error_from(resp: httpx.Response) -> RingError:
     except (ValueError, AttributeError, IndexError):
         pass
     text = f"Ring API {resp.status_code}: {message}"
+    if resp.status_code == 403 and "time range" in str(message).lower():
+        # Seen on the Developer Playground: media is only served for times the app is authorized
+        # for (after consent, around events). This is "no media for that range", not a bad token.
+        return MediaNotReady(text, status=403, code=code or "TIME_RANGE_NOT_AUTHORIZED")
     if resp.status_code in (401, 403):
         return RingAuthError(text, status=resp.status_code, code=code)
     if resp.status_code in (416, 425):
@@ -324,7 +329,9 @@ class RingClient:
         while True:
             try:
                 return await self._download(f"/v1/devices/{device_id}/media/video/download", payload)
-            except MediaNotReady:
+            except MediaNotReady as exc:
+                if exc.status == 403:
+                    raise  # an unauthorized range will not become available by waiting
                 delay = delays[min(attempt, len(delays) - 1)] + random.uniform(0, 1.5)
                 if retry_until is None or time.time() + delay > retry_until:
                     raise

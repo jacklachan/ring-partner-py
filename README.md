@@ -64,7 +64,8 @@ Details that are easy to get wrong, handled for you:
 
 - **Media downloads answer `303` with a pre-signed URL.** The client fetches that URL by hand and does
   not send your bearer token to it.
-- **`416 MEDIA_NOT_FOUND` and `425 RECORDING_NOT_READY`** raise `MediaNotReady`. `video_clip(retry_until=...)`
+- **`416 MEDIA_NOT_FOUND`, `425 RECORDING_NOT_READY`, and the `403` Ring returns for a time range your app
+  is not authorized for** raise `MediaNotReady`, so "no media" is never mistaken for an expired token. `video_clip(retry_until=...)`
   retries the unchanged request with backoff and jitter, as Ring's guidance describes.
 - **Expired tokens** raise `RingAuthError` (`.status` is 401 or 403), separate from other `RingError`s.
 - **Multi-camera devices:** pass `component_id=` to the media calls.
@@ -155,10 +156,13 @@ The stand-in follows the published documentation. It has no video clips or live 
 
 ## Status
 
-- 13 tests, run in CI on Python 3.10 and 3.13, all against the stand-in.
-- Written from Ring's public documentation and hello-world sample. As of this release it has **not yet
-  been exercised against the live API**; if a call behaves differently for you, please open an issue with
-  the status code and error body.
+- 14 tests, run in CI on Python 3.10 and 3.13, all against the stand-in.
+- Written from Ring's public documentation and hello-world sample. Checked against the live API with a
+  Developer Playground token on 8 October 2026: device discovery, status, capabilities and Event History
+  worked. Image download answered `403 Requested time range is not within authorized boundaries` for a
+  window with no events in it, which the client now raises as `MediaNotReady`. Snapshots for a real event,
+  video clips, WHEP and refresh-token sign-in have **not** been confirmed live yet. If a call behaves
+  differently for you, please open an issue with the status code and error body.
 - Not covered yet: account linking (nonce verification), device configurations and location, RTSP,
   chime audio playback, sensor events.
 

@@ -140,3 +140,15 @@ async def test_cli_check_reports_each_capability(ring, state, capsys, tmp_path):
     out = capsys.readouterr().out
     assert code == 0 and frame.read_bytes()[:2] == b"\xff\xd8"
     assert "ok    list devices" in out and "ok    event history" in out and "ok    latest snapshot" in out
+
+
+async def test_403_for_an_unauthorized_time_range_is_no_media_not_a_bad_token():
+    # The reply the Developer Playground gave on 8 Oct 2026 for a range with no events in it.
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(403, json={"errors": [{"detail": "Requested time range is not within authorized boundaries"}]})
+
+    ring = RingClient(access_token="tok", api_base=BASE, transport=httpx.MockTransport(handler))
+    with pytest.raises(MediaNotReady) as info:
+        await ring.latest_snapshot(DEVICE_ID, 1, 2)
+    assert info.value.status == 403 and not isinstance(info.value, RingAuthError)
+    await ring.aclose()
